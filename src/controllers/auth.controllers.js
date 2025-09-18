@@ -184,14 +184,10 @@ export const oauthLogin = async (req, res) => {
     let user = await prisma.user.findUnique({ where: { email: lowerEmail } });
 
     if (!user) {
-      const [firstName, ...rest] = name.trim().split(" ");
-      const lastName = rest.join(" ");
-
       user = await prisma.user.create({
         data: {
           email: lowerEmail,
-          firstName,
-          lastName,
+          name: name.trim(), // ✅ শুধু name ব্যবহার করো
           avatarUrl: image,
           emailVerified: true,
           isActive: true,
