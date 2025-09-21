@@ -62,17 +62,10 @@ model Category {
   slug            String   @unique
   description     String?
   imageUrl        String?
-  parentId        String?
   sortOrder       Int      @default(0)
   isActive        Boolean  @default(true)
-  metaTitle       String?
-  metaDescription String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  brands          Brand[]
-
-  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  children Category[] @relation("CategoryHierarchy")
   products Product[]
 
   @@map("categories")
@@ -88,9 +81,7 @@ model Brand {
   isActive    Boolean   @default(true)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  categoryId  String?
-  category    Category? @relation(fields: [categoryId], references: [id])
-
+  
   products Product[]
 
   @@map("brands")
