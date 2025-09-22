@@ -71,7 +71,8 @@ export const createProduct = async (req, res) => {
         },
 
         // Images only have 'url'
-        images: images ? { create: images.map((url) => ({ url })) } : undefined,
+        // TODO: here image have to be handled properly
+        // images: images ? { create: images.map((url) => ({ url })) } : undefined,
       },
     });
 
