@@ -4,7 +4,10 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "db:clear": "node prisma/clear.js",
+    "db:seed": "node prisma/seed.js",
+    "db:reseed": "npm run db:clear && npm run db:seed"
   },
   "keywords": [],
   "author": "",
