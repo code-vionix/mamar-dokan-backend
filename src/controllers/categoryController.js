@@ -1,8 +1,6 @@
-import {
-  deleteImageFromCloudinary,
-  uploadImageToCloudinary,
-} from "../config/cloudinary.js";
+import { deleteImageFromCloudinary } from "../config/cloudinary.js";
 import { prisma } from "../config/database.js";
+import { uploadToCloudinary } from "../utils/cloudinary.js";
 import { createResponse } from "../utils/responseHelper.js";
 import { slugify } from "../utils/slugMaker.js";
 
@@ -15,7 +13,7 @@ export const createCategory = async (req, res) => {
       .json(createResponse(false, "Category name is Required!"));
   try {
     const slug = slugify(name);
-    let imageUrl = null;
+    let image = null;
 
     const isCategoryExist = await prisma.category.findUnique({
       where: { slug },
@@ -28,14 +26,16 @@ export const createCategory = async (req, res) => {
         );
 
     if (req.file && req.file?.buffer) {
-      imageUrl = await uploadImageToCloudinary(req.file.buffer);
+      image = await uploadToCloudinary(req.file.buffer, "categories")
+        ?.secure_url;
     }
+
     const category = await prisma.category.create({
       data: {
         name,
         slug,
         description,
-        imageUrl,
+        image,
       },
     });
     res.status(201).json(createResponse(true, "Category Created!", category));
