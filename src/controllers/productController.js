@@ -90,9 +90,24 @@ export const createProduct = async (req, res) => {
 // =======================
 export const getProducts = async (req, res) => {
   try {
-    const products = await prisma.product.findMany({
-      include: { images: true, features: true },
-    });
+    const { recent } = req.query;
+
+    let products;
+
+    if (recent) {
+      // সর্বশেষ 4 টা product আনবে
+      products = await prisma.product.findMany({
+        include: { images: true, features: true },
+        orderBy: { createdAt: "desc" }, // createdAt field থাকতে হবে
+        take: 8,
+      });
+    } else {
+      // সব product আনবে
+      products = await prisma.product.findMany({
+        include: { images: true, features: true },
+      });
+    }
+
     res.json({ success: true, data: products });
   } catch (error) {
     console.error("Get Products Error:", error);
@@ -101,6 +116,7 @@ export const getProducts = async (req, res) => {
       .json({ success: false, message: "Failed to fetch products" });
   }
 };
+
 
 // =======================
 // ✅ Get Single Product
