@@ -71,8 +71,7 @@ export const createProduct = async (req, res) => {
         },
 
         // Images only have 'url'
-        // TODO: here image have to be handled properly
-        // images: images ? { create: images.map((url) => ({ url })) } : undefined,
+        images: images ? { create: images.map((url) => ({ url })) } : undefined,
       },
     });
 
@@ -97,14 +96,14 @@ export const getProducts = async (req, res) => {
     if (recent) {
       // সর্বশেষ 4 টা product আনবে
       products = await prisma.product.findMany({
-        include: { images: true, features: true },
+        include: { images: true, features: true, category: true },
         orderBy: { createdAt: "desc" }, // createdAt field থাকতে হবে
         take: 8,
       });
     } else {
       // সব product আনবে
       products = await prisma.product.findMany({
-        include: { images: true, features: true },
+        include: { images: true, features: true, category: true },
       });
     }
 
@@ -116,7 +115,6 @@ export const getProducts = async (req, res) => {
       .json({ success: false, message: "Failed to fetch products" });
   }
 };
-
 
 // =======================
 // ✅ Get Single Product
