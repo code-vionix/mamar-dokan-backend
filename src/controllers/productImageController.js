@@ -1,27 +1,28 @@
 // controllers/uploadController.js
-import cloudinary from "../utils/cloudinary.js";
+import { uploadToCloudinary } from "../utils/cloudinary.js";
 
-export const uploadToCloudinary = async (req, res) => {
+export const uploadToCloudinaryController = async (req, res) => {
   try {
-    const file = req.file;
+    const results = await Promise.all(
+      req.files.map((file) => uploadToCloudinary(file.buffer, "products"))
+    );
 
-    if (!file) {
-      return res.status(400).json({ error: "No file uploaded" });
+    if (results.length === 0) {
+      return res.status(400).json({ error: "No files uploaded" });
     }
 
-    const result = await new Promise((resolve, reject) => {
-      cloudinary.uploader.upload_stream({ folder: "products" }, (error, result) => {
-        if (error) reject(error);
-        else resolve(result);
-      }).end(file.buffer);
-    });
+    // If you want to return all uploaded file URLs
+    const urls = results.map((result) => result.secure_url);
+    const public_ids = results.map((result) => result.public_id);
 
     return res.status(200).json({
       message: "Uploaded successfully",
-      url: result.secure_url,
-      public_id: result.public_id,
+      url: urls,
+      public_id: public_ids,
     });
   } catch (error) {
-    return res.status(500).json({ error: "Cloudinary upload failed", details: error.message });
+    return res
+      .status(500)
+      .json({ error: "Cloudinary upload failed", details: error.message });
   }
 };

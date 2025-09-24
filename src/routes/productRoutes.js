@@ -1,12 +1,18 @@
 import express from "express";
+import {
+  createProduct,
+  deleteProduct,
+  getProductById,
+  getProducts,
+  updateProduct,
+} from "../controllers/productController.js";
+import { uploadToCloudinaryController } from "../controllers/productImageController.js";
 import upload from "../middleware/multer.js";
-import { uploadToCloudinary } from "../controllers/productImageController.js";
-import { createProduct, getProducts, getProductById, updateProduct, deleteProduct } from "../controllers/productController.js";
 
 const router = express.Router();
 
 // ✅ Single image upload route
-router.post("/image", upload.single("file"), uploadToCloudinary);
+router.post("/image", upload.array("files"), uploadToCloudinaryController);
 
 // Create product
 router.post("/", createProduct);

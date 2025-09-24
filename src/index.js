@@ -1,12 +1,13 @@
 import cors from "cors";
-import "dotenv/config";
+import dotenv from "dotenv";
 import express from "express";
-import productRoutes from "./routes/productRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
-import wishlistRoutes from "./routes/wishlistRoutes.js";
+import productRoutes from "./routes/productRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
+import wishlistRoutes from "./routes/wishlistRoutes.js";
+dotenv.config();
 
 const app = express();
 
@@ -16,7 +17,7 @@ app.use("/api/v1/cart", cartRoutes);
 app.use("/api/v1/category", categoryRoutes);
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/products", productRoutes);
-app.use("/api/v1/wishlist", wishlistRoutes)
+app.use("/api/v1/wishlist", wishlistRoutes);
 app.use("/api/v1/review", reviewRoutes);
 
 const PORT = process.env.PORT || 5000;

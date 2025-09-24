@@ -1,97 +1,118 @@
 import prisma from "../lib/prisma.js";
+import { slugify } from "../utils/slugMaker.js";
 
 // =======================
 // ✅ Create Product
 // =======================
 export const createProduct = async (req, res) => {
-    try {
-      const {
-        id,
+  try {
+    const {
+      id,
+      name,
+      description,
+      price,
+      salePrice,
+      categoryId,
+      tags,
+      material,
+      color,
+      pattern,
+      region,
+      quantity,
+      inStock,
+      images,
+    } = req.body;
+
+    if (!name || !price) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Name, slug and price are required" });
+    }
+
+    const slug = slugify(name);
+
+    // Validate categoryId if provided
+    let resolvedCategoryId = null;
+    if (categoryId) {
+      const existingCategory = await prisma.category.findUnique({
+        where: { id: categoryId },
+        select: { id: true },
+      });
+      if (!existingCategory) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid categoryId: category not found",
+        });
+      }
+      resolvedCategoryId = existingCategory.id;
+    }
+
+    const product = await prisma.product.create({
+      data: {
+        id: id || undefined,
         name,
         slug,
         description,
-        price,
-        salePrice,
-        categoryId,
-        tags,
-        material,
-        color,
-        pattern,
-        region,
-        quantity,
-        inStock,
-        images,
-      } = req.body;
-  
-      if (!name || !slug || !price) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Name, slug and price are required" });
-      }
-  
-      // Validate categoryId if provided
-      let resolvedCategoryId = null;
-      if (categoryId) {
-        const existingCategory = await prisma.category.findUnique({
-          where: { id: categoryId },
-          select: { id: true },
-        });
-        if (!existingCategory) {
-          return res.status(400).json({ success: false, message: "Invalid categoryId: category not found" });
-        }
-        resolvedCategoryId = existingCategory.id;
-      }
-  
-      const product = await prisma.product.create({
-        data: {
-          id: id || undefined,
-          name,
-          slug,
-          description,
-          price: parseFloat(price),
-          salePrice: salePrice ? parseFloat(salePrice) : null,
-          categoryId: resolvedCategoryId,
-          tags: tags || [],
-          inventoryQuantity: quantity || 0,
-          status: inStock ? "IN_STOCK" : "LOW_STOCK",
-  
-          // Features include both 'key' and 'value' per schema
-          features: {
-            create: [
-              material ? { key: "material", value: material } : null,
-              color ? { key: "color", value: color } : null,
-              pattern ? { key: "pattern", value: pattern } : null,
-              region ? { key: "region", value: region } : null,
-            ].filter(Boolean),
-          },
-  
-          // Images only have 'url'
-          images: images
-            ? { create: images.map((url) => ({ url })) }
-            : undefined,
+        price: parseFloat(price),
+        salePrice: salePrice ? parseFloat(salePrice) : null,
+        categoryId: resolvedCategoryId,
+        tags: tags || [],
+        inventoryQuantity: quantity || 0,
+        status: inStock ? "IN_STOCK" : "LOW_STOCK",
+
+        // Features include both 'key' and 'value' per schema
+        features: {
+          create: [
+            material ? { key: "material", value: material } : null,
+            color ? { key: "color", value: color } : null,
+            pattern ? { key: "pattern", value: pattern } : null,
+            region ? { key: "region", value: region } : null,
+          ].filter(Boolean),
         },
-      });
-  
-      res.status(201).json({ success: true, data: product });
-    } catch (error) {
-      console.error("Create Product Error:", error);
-      res.status(500).json({ success: false, message: "Failed to create product" });
-    }
-  };
-  
+
+        // Images only have 'url'
+        images: images ? { create: images.map((url) => ({ url })) } : undefined,
+      },
+    });
+
+    res.status(201).json({ success: true, data: product });
+  } catch (error) {
+    console.error("Create Product Error:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to create product" });
+  }
+};
 
 // =======================
 // ✅ Get All Products
 // =======================
 export const getProducts = async (req, res) => {
   try {
-    const products = await prisma.product.findMany({
-      include: { images: true, features: true },
-    });
+    const { recent } = req.query;
+
+    let products;
+
+    if (recent) {
+      // সর্বশেষ 4 টা product আনবে
+      products = await prisma.product.findMany({
+        include: { images: true, features: true, category: true },
+        orderBy: { createdAt: "desc" }, // createdAt field থাকতে হবে
+        take: 8,
+      });
+    } else {
+      // সব product আনবে
+      products = await prisma.product.findMany({
+        include: { images: true, features: true, category: true },
+      });
+    }
+
     res.json({ success: true, data: products });
   } catch (error) {
     console.error("Get Products Error:", error);
-    res.status(500).json({ success: false, message: "Failed to fetch products" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch products" });
   }
 };
 
@@ -107,13 +128,17 @@ export const getProductById = async (req, res) => {
     });
 
     if (!product) {
-      return res.status(404).json({ success: false, message: "Product not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found" });
     }
 
     res.json({ success: true, data: product });
   } catch (error) {
     console.error("Get Product Error:", error);
-    res.status(500).json({ success: false, message: "Failed to fetch product" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch product" });
   }
 };
 
@@ -151,7 +176,10 @@ export const updateProduct = async (req, res) => {
           select: { id: true },
         });
         if (!existingCategory) {
-          return res.status(400).json({ success: false, message: "Invalid categoryId: category not found" });
+          return res.status(400).json({
+            success: false,
+            message: "Invalid categoryId: category not found",
+          });
         }
         resolvedCategoryIdUpdate = existingCategory.id;
       }
@@ -168,7 +196,12 @@ export const updateProduct = async (req, res) => {
         categoryId: resolvedCategoryIdUpdate,
         tags,
         inventoryQuantity: quantity,
-        status: inStock !== undefined ? (inStock ? "IN_STOCK" : "LOW_STOCK") : undefined,
+        status:
+          inStock !== undefined
+            ? inStock
+              ? "IN_STOCK"
+              : "LOW_STOCK"
+            : undefined,
         features: {
           deleteMany: {}, // delete old features
           create: [
@@ -191,7 +224,9 @@ export const updateProduct = async (req, res) => {
     res.json({ success: true, data: product });
   } catch (error) {
     console.error("Update Product Error:", error);
-    res.status(500).json({ success: false, message: "Failed to update product" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to update product" });
   }
 };
 
@@ -205,6 +240,8 @@ export const deleteProduct = async (req, res) => {
     res.json({ success: true, message: "Product deleted successfully" });
   } catch (error) {
     console.error("Delete Product Error:", error);
-    res.status(500).json({ success: false, message: "Failed to delete product" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to delete product" });
   }
 };

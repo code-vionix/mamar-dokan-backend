@@ -4,7 +4,11 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon src/index.js"
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "db:clear": "node prisma/clear.js",
+    "db:seed": "node prisma/seed.js",
+    "db:reseed": "npm run db:clear && npm run db:seed"
   },
   "keywords": [],
   "author": "",
@@ -21,7 +25,8 @@
     "express-validator": "^7.2.1",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.19.0",
-    "multer": "^2.0.2"
+    "multer": "^2.0.2",
+    "streamifier": "^0.1.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.10",
