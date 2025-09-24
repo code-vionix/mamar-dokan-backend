@@ -4,6 +4,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "start": "node src/index.js",
     "dev": "nodemon src/index.js",
     "db:clear": "node prisma/clear.js",
     "db:seed": "node prisma/seed.js",
