@@ -7,7 +7,7 @@ import {
   toggleActiveStatus,
   updateCategory,
 } from "../controllers/categoryController.js";
-import { upload } from "../config/multer.js";
+import upload from "../middleware/multer.js";
 
 const router = express.Router();
 
