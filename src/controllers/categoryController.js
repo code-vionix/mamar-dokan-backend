@@ -13,7 +13,7 @@ export const createCategory = async (req, res) => {
       .json(createResponse(false, "Category name is Required!"));
   try {
     const slug = slugify(name);
-    let image = null;
+    let imageUrl = null;
 
     const isCategoryExist = await prisma.category.findUnique({
       where: { slug },
@@ -26,8 +26,8 @@ export const createCategory = async (req, res) => {
         );
 
     if (req.file && req.file?.buffer) {
-      image = await uploadToCloudinary(req.file.buffer, "categories")
-        ?.secure_url;
+      const image = await uploadToCloudinary(req.file.buffer, "categories");
+      imageUrl = image.secure_url;
     }
 
     const category = await prisma.category.create({
@@ -35,9 +35,10 @@ export const createCategory = async (req, res) => {
         name,
         slug,
         description,
-        image,
+        imageUrl,
       },
     });
+
     res.status(201).json(createResponse(true, "Category Created!", category));
   } catch (error) {
     console.log("Category creating error : ", error);
