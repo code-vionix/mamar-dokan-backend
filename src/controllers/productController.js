@@ -14,12 +14,6 @@ export const createProduct = async (req, res) => {
       salePrice,
       categoryId,
       tags,
-      material,
-      color,
-      pattern,
-      region,
-      quantity,
-      inStock,
       images,
     } = req.body;
 
@@ -57,21 +51,7 @@ export const createProduct = async (req, res) => {
         salePrice: salePrice ? parseFloat(salePrice) : null,
         categoryId: resolvedCategoryId,
         tags: tags || [],
-        inventoryQuantity: quantity || 0,
-        status: inStock ? "IN_STOCK" : "LOW_STOCK",
-
-        // Features include both 'key' and 'value' per schema
-        features: {
-          create: [
-            material ? { key: "material", value: material } : null,
-            color ? { key: "color", value: color } : null,
-            pattern ? { key: "pattern", value: pattern } : null,
-            region ? { key: "region", value: region } : null,
-          ].filter(Boolean),
-        },
-
-        // Images only have 'url'
-        images: images ? { create: images.map((url) => ({ url })) } : undefined,
+        images,
       },
     });
 
@@ -96,14 +76,14 @@ export const getProducts = async (req, res) => {
     if (recent) {
       // সর্বশেষ 4 টা product আনবে
       products = await prisma.product.findMany({
-        include: { images: true, features: true, category: true },
+        include: { category: true },
         orderBy: { createdAt: "desc" }, // createdAt field থাকতে হবে
         take: 8,
       });
     } else {
       // সব product আনবে
       products = await prisma.product.findMany({
-        include: { images: true, features: true, category: true },
+        include: { category: true },
       });
     }
 
@@ -117,14 +97,41 @@ export const getProducts = async (req, res) => {
 };
 
 // =======================
-// ✅ Get Single Product
+// ✅ Get Single Product By ID
 // =======================
 export const getProductById = async (req, res) => {
   try {
     const { id } = req.params;
     const product = await prisma.product.findUnique({
       where: { id },
-      include: { images: true, features: true },
+      include: { category: true },
+    });
+
+    if (!product) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found" });
+    }
+
+    res.json({ success: true, data: product });
+  } catch (error) {
+    console.error("Get Product Error:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch product" });
+  }
+};
+
+// =======================
+// ✅ Get Single Product By slug
+// =======================
+export const getProductBySlug = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    console.log("Fetching product with slug:", slug); // Debug log
+    const product = await prisma.product.findUnique({
+      where: { slug },
+      include: { category: true },
     });
 
     if (!product) {
