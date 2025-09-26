@@ -21,14 +21,11 @@ model User {
   lastLoginAt   DateTime?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
-  reviewVotes   ReviewVote[]
 
   addresses   UserAddress[]
   orders      Order[]
   reviews     ProductReview[]
   wishlist    Wishlist[]
-  cart        Cart?
-  cartSummary CartSummary?
 
   @@map("users")
 }
@@ -40,11 +37,9 @@ model UserAddress {
   isDefault    Boolean     @default(false)
   firstName    String
   lastName     String
-  company      String?
   addressLine1 String
   addressLine2 String?
   city         String
-  state        String
   postalCode   String
   country      String
   phone        String?
@@ -87,19 +82,6 @@ model Brand {
   @@map("brands")
 }
 
-enum StockStatus {
-  IN_STOCK
-  LOW_STOCK
-  OUT_OF_STOCK
-}
-
-enum FlashSaleStatus {
-  UPCOMING
-  ACTIVE
-  EXPIRED
-  PAUSED
-}
-
 model Product {
   id                String  @id @default(uuid())
   name              String
@@ -107,162 +89,48 @@ model Product {
   description       String?
   price             Float
   costPrice         Float?
-  trackInventory    Boolean @default(true)
-  inventoryQuantity Int     @default(0)
+
   allowBackorder    Boolean @default(false)
 
-  onSale            Boolean @default(false)
   salePrice         Float?
-
-  flashSale         Boolean @default(false)
-  flashSalePrice    Float?
-  flashDiscount     Float?
-  flashSaleStart    DateTime?
-  flashSaleEnd      DateTime?
-  maxQtyPerCustomer Int?
-  flashSaleStatus   FlashSaleStatus @default(ACTIVE)
 
   taxClass          String?
   warehouse         String?
 
-  status StockStatus @default(LOW_STOCK)
-
-  categoryId String?
+  categoryId String
   brandId    String?
   category   Category? @relation(fields: [categoryId], references: [id])
   brand      Brand?    @relation(fields: [brandId], references: [id])
 
   isActive        Boolean  @default(false)
   isFeatured      Boolean  @default(false)
-  metaTitle       String?
-  metaDescription String?
   tags            String[]
 
   viewCount Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  images        ProductImage[]
-  variants      ProductVariant[]
+  images        String[]
   reviews       ProductReview[]
-  cartItems     CartItem[]
   orderItems    OrderItem[]
   wishlistItems Wishlist[]
-
-  features       ProductFeature[]
-  shippingInfo   ProductShippingInfo[]
-  specifications ProductSpecification[]
+  stock         Stock[]
 }
 
-model ProductFeature {
-  id        String  @id @default(uuid())
-  value     String
-  key       String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productId String
-}
-
-model ProductShippingInfo {
-  id        String  @id @default(uuid())
-  info      String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productId String
-}
-
-model ProductSpecification {
-  id        String  @id @default(uuid())
-  key       String
-  value     String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productId String
-}
-
-model ProductImage {
+model Stock {
   id        String   @id @default(uuid())
   productId String
-  url       String
-  altText   String?
-  main      Boolean  @default(false)
-  sortOrder Int      @default(0)
-  isPrimary Boolean  @default(false)
+  quantity  Int      @default(0)
+  reserved  Int      @default(0)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  @@map("product_images")
+  @@map("stocks")
+  @@unique([productId])
 }
 
-model ProductVariant {
-  id        String  @id @default(uuid())
-  productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  size           String?
-  color          String?
-  sku            String? @unique
-  price          Float?
-  costPrice      Float?
-  stock          Int     @default(0)
-  isActive       Boolean @default(true)
-  trackInventory Boolean @default(true)
-  allowBackorder Boolean @default(false)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  cartItems  CartItem[]  @relation("VariantCartItems")
-  orderItems OrderItem[] @relation("VariantOrderItems")
-
-  @@map("product_variants")
-}
-
-model Cart {
-  id        String   @id @default(uuid())
-  userId    String?  @unique
-  sessionId String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user  User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items CartItem[]
-
-  cartSummary CartSummary?
-
-  @@map("shopping_carts")
-}
-
-model CartItem {
-  id        String   @id @default(uuid())
-  cartId    String
-  productId String
-  variantId String?
-  quantity  Int      @default(1)
-  price     Float
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  cart    Cart            @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  product Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
-  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade, name: "VariantCartItems")
-
-  @@map("cart_items")
-}
-
-model CartSummary {
-  id         String   @id @default(uuid())
-  userId     String   @unique
-  cartId     String   @unique
-  subtotal   Float
-  shipping   Float
-  tax        Float
-  discount   Float
-  total      Float
-  couponCode String?
-  createdAt  DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id])
-  cart Cart @relation(fields: [cartId], references: [id])
-}
 
 model Wishlist {
   id        String   @id @default(uuid())
@@ -279,19 +147,17 @@ model Wishlist {
 
 model Order {
   id              String        @id @default(uuid())
-  orderNumber     String        @unique
-  userId          String?
+  userId          String
   email           String
   status          OrderStatus   @default(PENDING)
   paymentStatus   PaymentStatus @default(PENDING)
   paymentMethod   String?
-  paymentId       String?
   subtotal        Float
   taxAmount       Float         @default(0)
   shippingAmount  Float         @default(0)
   discountAmount  Float         @default(0)
   totalAmount     Float
-  currency        String        @default("USD")
+  currency        String        @default("BDT")
   billingAddress  Json
   shippingAddress Json
   notes           String?
@@ -303,8 +169,9 @@ model Order {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  user  User?       @relation(fields: [userId], references: [id])
+  user  User      @relation(fields: [userId], references: [id])
   items OrderItem[]
+  review ProductReview[]
 
   @@map("orders")
 }
@@ -313,19 +180,14 @@ model OrderItem {
   id          String   @id @default(uuid())
   orderId     String
   productId   String?
-  variantId   String?
-  productName String
-  variantName String?
   sku         String?
   quantity    Int
   price       Float
   total       Float
-  imageUrl    String?
   createdAt   DateTime @default(now())
 
   order   Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product Product?        @relation(fields: [productId], references: [id])
-  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade, name: "VariantOrderItems")
 
   @@map("order_items")
 }
@@ -334,36 +196,20 @@ model ProductReview {
   id              String       @id @default(uuid())
   productId       String
   userId          String
-  orderId         String?
+  orderId         String
   rating          Int
-  title           String?
-  comment         String?
-  isVerified      Boolean      @default(false)
+  review          String?
   helpfulCount    Int          @default(0)
   notHelpfulCount Int          @default(0)
-  isApproved      Boolean      @default(true)
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
-  reviewVotes     ReviewVote[]
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@unique([productId, userId])
   @@map("product_reviews")
-}
-
-model ReviewVote {
-  id        String  @id @default(uuid())
-  userId    String
-  reviewId  String
-  isHelpful Boolean
-
-  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  review ProductReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, reviewId])
-  @@map("review_votes")
 }
 
 model Coupon {

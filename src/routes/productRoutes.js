@@ -3,6 +3,7 @@ import {
   createProduct,
   deleteProduct,
   getProductById,
+  getProductBySlug,
   getProducts,
   updateProduct,
 } from "../controllers/productController.js";
@@ -20,8 +21,11 @@ router.post("/", createProduct);
 // Get all products
 router.get("/", getProducts);
 
-// Get single product
+// Get single product By ID
 router.get("/:id", getProductById);
+
+// Get single product By slug
+router.get("/slug/:slug", getProductBySlug);
 
 // Update product
 router.put("/:id", updateProduct);

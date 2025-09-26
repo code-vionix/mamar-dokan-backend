@@ -2,6 +2,9 @@ import { prisma } from "../config/database.js";
 import { createResponse } from "../utils/responseHelper.js";
 
 export const toggleWishlistProduct = async (req, res) => {
+  if (!req.body || !req.params)
+    return res.status(400).json(createResponse(false, "Invalid request"));
+
   const { productId } = req.body;
   const { userId } = req.params;
   try {
@@ -12,15 +15,15 @@ export const toggleWishlistProduct = async (req, res) => {
     }
     const isExist = await prisma.wishlist.findUnique({
       where: {
-          userId_productId: {userId, productId}
-        }
+        userId_productId: { userId, productId },
+      },
     });
 
     if (isExist) {
       const deletedProduct = await prisma.wishlist.delete({
         where: {
-          userId_productId: {userId, productId}
-        }
+          userId_productId: { userId, productId },
+        },
       });
       res
         .status(200)
@@ -31,8 +34,8 @@ export const toggleWishlistProduct = async (req, res) => {
       const newProduct = await prisma.wishlist.create({
         data: {
           userId,
-          productId
-        }
+          productId,
+        },
       });
       res
         .status(201)
