@@ -76,14 +76,14 @@ export const getProducts = async (req, res) => {
     if (recent) {
       // সর্বশেষ 4 টা product আনবে
       products = await prisma.product.findMany({
-        include: { category: true },
+        include: { category: true, stock: true },
         orderBy: { createdAt: "desc" }, // createdAt field থাকতে হবে
         take: 8,
       });
     } else {
       // সব product আনবে
       products = await prisma.product.findMany({
-        include: { category: true },
+        include: { category: true, stock: true },
       });
     }
 
@@ -104,7 +104,7 @@ export const getProductById = async (req, res) => {
     const { id } = req.params;
     const product = await prisma.product.findUnique({
       where: { id },
-      include: { category: true },
+      include: { category: true, stock: true },
     });
 
     if (!product) {
@@ -131,7 +131,7 @@ export const getProductBySlug = async (req, res) => {
     console.log("Fetching product with slug:", slug); // Debug log
     const product = await prisma.product.findUnique({
       where: { slug },
-      include: { category: true },
+      include: { category: true, stock: true },
     });
 
     if (!product) {
