@@ -7,7 +7,7 @@ import { createResponse } from "../utils/responseHelper.js";
 export const updateUserInfo = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, phone } = req.body;
+    const { name, phone } = req.body;
 
     if (!id) {
       return res
@@ -38,19 +38,6 @@ export const updateUserInfo = async (req, res) => {
         ignoredFields.name = "New name cannot be the same as the current name.";
       } else {
         updateData.name = name;
-      }
-    }
-
-    // Email
-    if (email !== undefined && email !== "") {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        errors.email = "Email must be a valid email address.";
-      } else if (userExist.email === email) {
-        ignoredFields.email =
-          "New email cannot be the same as the current email.";
-      } else {
-        updateData.email = email;
       }
     }
 
@@ -93,7 +80,6 @@ export const updateUserInfo = async (req, res) => {
       createResponse(true, "User info updated!", {
         id: updatedUser.id,
         name: updatedUser.name,
-        email: updatedUser.email,
         phone: updatedUser.phone,
       })
     );
@@ -284,7 +270,9 @@ export const getUserAddresses = async (req, res) => {
     const addresses = await prisma.userAddress.findMany({
       where: { userId: id },
     });
-    res.status(200).json(createResponse(true, "Fetch available user addresses", addresses));
+    res
+      .status(200)
+      .json(createResponse(true, "Fetch available user addresses", addresses));
   } catch (error) {
     console.error("User address getting error:", error);
     res.status(500).json(createResponse(false, "Internal server error"));
