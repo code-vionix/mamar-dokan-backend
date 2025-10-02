@@ -3,6 +3,38 @@ import { prisma } from "../config/database.js";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
 import { createResponse } from "../utils/responseHelper.js";
 
+// Get User By Id
+export const getUserById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return res
+        .status(400)
+        .json(createResponse(false, "User ID is required!"));
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: {
+        addresses: true,
+      },
+    });
+
+    if (!user) {
+      return res
+        .status(404)
+        .json(createResponse(false, `User not found with ID ${id}`));
+    }
+
+    const { passwordHash, ...rest } = user;
+
+    res.status(200).json(createResponse(true, "User fetched!", rest));
+  } catch (error) {
+    console.error("User fetching error:", error);
+    res.status(500).json(createResponse(false, "Internal server error"));
+  }
+};
+
 // Update User Info
 export const updateUserInfo = async (req, res) => {
   try {

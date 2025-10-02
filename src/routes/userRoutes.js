@@ -1,17 +1,19 @@
 import express from "express";
-import upload from "../middleware/multer.js";
 import {
   createUserAddress,
   deleteUserAddress,
   getUserAddresses,
+  getUserById,
   updatePassword,
   updateUserAddress,
   updateUserAvatar,
   updateUserInfo,
 } from "../controllers/userController.js";
+import upload from "../middleware/multer.js";
 
 const router = express.Router();
 
+router.get("/:id", getUserById);
 router.patch("/:id/avatar", upload.single("image"), updateUserAvatar);
 router.patch("/:id", updateUserInfo);
 router.patch("/:id/password", updatePassword);
