@@ -9,6 +9,7 @@ import reviewRoutes from "./routes/reviewRoutes.js";
 import stockRoutes from "./routes/stock.routes.js";
 import userRoutes from "./routes/userRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
+import orderRoutes from "./routes/order.routes.js";
 dotenv.config();
 
 const app = express();
@@ -23,6 +24,7 @@ app.use("/api/v1/wishlist", wishlistRoutes);
 app.use("/api/v1/review", reviewRoutes);
 app.use("/api/v1/stock", stockRoutes);
 app.use("/api/v1/user", userRoutes);
+app.use("/api/v1/order", orderRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () =>
