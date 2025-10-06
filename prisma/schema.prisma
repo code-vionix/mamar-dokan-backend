@@ -158,7 +158,7 @@ model Order {
   discountAmount  Float         @default(0)
   totalAmount     Float
   currency        String        @default("BDT")
-  billingAddress  Json
+  billingAddress  Json?
   shippingAddress Json
   notes           String?
   trackingNumber  String?
