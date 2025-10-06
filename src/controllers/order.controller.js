@@ -128,7 +128,11 @@ export const getOrders = async (req, res) => {
   try {
     const orders = await prisma.order.findMany({
       include: {
-        items: true,
+        items: {
+          include: {
+            product: true,
+          },
+        },
         user: true,
       },
     });
@@ -149,7 +153,11 @@ export const getOrderById = async (req, res) => {
     const order = await prisma.order.findUnique({
       where: { id },
       include: {
-        items: true,
+        items: {
+          include: {
+            product: true,
+          },
+        },
         user: true,
       },
     });
@@ -254,7 +262,11 @@ export const getOrdersByUserId = async (req, res) => {
     const orders = await prisma.order.findMany({
       where: { userId },
       include: {
-        items: true,
+        items: {
+          include: {
+            product: true,
+          },
+        },
         user: true,
       },
     });
