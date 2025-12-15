@@ -163,79 +163,65 @@ export const updateProduct = async (req, res) => {
       salePrice,
       categoryId,
       tags,
-      material,
-      color,
-      pattern,
-      region,
-      quantity,
-      inStock,
       images,
+      stockQuantity, // স্টক আপডেট করার জন্য আলাদা ফিল্ড
     } = req.body;
 
-    // Validate categoryId if provided for update
-    let resolvedCategoryIdUpdate = undefined;
-    if (categoryId !== undefined) {
-      if (categoryId === null) {
-        resolvedCategoryIdUpdate = null;
-      } else {
-        const existingCategory = await prisma.category.findUnique({
-          where: { id: categoryId },
-          select: { id: true },
+    // Validate categoryId if provided
+    let categoryConnect = undefined;
+    if (categoryId) {
+      const existingCategory = await prisma.category.findUnique({
+        where: { id: categoryId },
+        select: { id: true },
+      });
+
+      if (!existingCategory) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid categoryId: category not found",
         });
-        if (!existingCategory) {
-          return res.status(400).json({
-            success: false,
-            message: "Invalid categoryId: category not found",
-          });
-        }
-        resolvedCategoryIdUpdate = existingCategory.id;
       }
+
+      categoryConnect = { connect: { id: existingCategory.id } };
     }
 
+    // Update Product
     const product = await prisma.product.update({
       where: { id },
       data: {
         name,
-        slug,
+        slug: slug || undefined,
         description,
-        price: price ? parseFloat(price) : undefined,
-        salePrice: salePrice ? parseFloat(salePrice) : undefined,
-        categoryId: resolvedCategoryIdUpdate,
-        tags,
-        inventoryQuantity: quantity,
-        status:
-          inStock !== undefined
-            ? inStock
-              ? "IN_STOCK"
-              : "LOW_STOCK"
-            : undefined,
-        features: {
-          deleteMany: {}, // delete old features
-          create: [
-            material ? { key: "material", value: material } : null,
-            color ? { key: "color", value: color } : null,
-            pattern ? { key: "pattern", value: pattern } : null,
-            region ? { key: "region", value: region } : null,
-          ].filter(Boolean),
-        },
-        images: images
-          ? {
-              deleteMany: {}, // delete old images
-              create: images.map((url) => ({ url })),
-            }
-          : undefined,
+        price: price !== undefined ? parseFloat(price) : undefined,
+        salePrice: salePrice !== undefined ? parseFloat(salePrice) : undefined,
+        category: categoryConnect,
+        tags: tags || undefined,
+        images: images || undefined,
       },
-      include: { images: true, features: true },
+      include: {
+        stock: true,
+        category: true,
+      },
     });
+
+    // Update stock quantity if provided
+    if (stockQuantity !== undefined) {
+      await prisma.stock.updateMany({
+        where: { productId: id },
+        data: { quantity: parseInt(stockQuantity, 10) },
+      });
+    }
 
     res.json({ success: true, data: product });
   } catch (error) {
     console.error("Update Product Error:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to update product" });
+    res.status(500).json({ success: false, message: "Failed to update product" });
   }
 };
+
+
+
+
 
 // =======================
 // ✅ Delete Product
